@@ -135,6 +135,10 @@ demo_sub=select(demo_data, ID, VISIT, Ethnicity, Gender, Age, Diagnosis, ADOS, M
 lu_sub=select(lu_data, ID, VISIT, MOT_MLU, MOT_LUstd, CHI_MLU, CHI_LUstd)
 token_sub=select(token_data, ID, VISIT, types_MOT, types_CHI, tokens_MOT, tokens_CHI)
 
+#To rename variables
+demo_sub=plyr::rename(demo_sub, c("MullenRaw" = "nonVerbalIQ"))
+demo_sub=plyr::rename(demo_sub, c("ExpressiveLangRaw" = "verbalIQ"))
+
 ```
 
 2e. Finally we are ready to merge all the data sets into just one. 
@@ -144,7 +148,11 @@ Tip: Merge only works for two data frames at the time.
 Tip: Check the number of observations in the datasets before and after merging. What is going on?
 
 ```{r}
+# To merge data
+data1=merge(demo_sub, lu_sub)
+DATA=merge(data1, token_sub)
 
+# The reason for less datapoints is because the number of observation for demographic data is greater than the two other dataframes. Therefore the extra datapoints cannot merge.
 ```
 
 Are we done yet?
@@ -158,6 +166,17 @@ Tip: the final dataset should have as many rows as the the old one.
 
 
 ```{r}
+# To only get data for visit 1
+Visit1_data=subset(DATA, DATA$VISIT == 1)
+
+#To only select relevant columns
+ID_visit=select(Visit1_data, ID, ADOS, nonVerbalIQ, verbalIQ)
+
+#To omit irrelevant NA columns from dataset 
+DATA_NEW=DATA[,-7:-9]
+
+#To merge datasets back together
+DATA2 = merge(DATA_NEW, ID_visit, by = "ID")
 
 ```
 
@@ -172,7 +191,18 @@ Tip: as.numeric() might be a useful function, but not alone.
 Tip: Google "how to rename levels in R".
 
 ```{r}
+# Visits is already numeric 
 
+# To make ID anonymous
+DATA2$ID=as.factor(DATA2$ID)
+DATA2$ID=as.numeric(DATA2$ID)
+
+# To change the gender variable
+DATA2$Gender=as.factor(DATA2$Gender)
+DATA2$Gender=revalue(DATA2$Gender, c("1"="M", "2"="F"))
+
+# To change diagnosis variable
+DATA2$Diagnosis=revalue(DATA2$Diagnosis, c("A"="ASD", "B"="TD"))
 
 ```
 
@@ -180,7 +210,7 @@ Tip: Google "how to rename levels in R".
 Save the data set using into a csv file. Hint: look into write.csv()
 
 ```{r}
-
+write.csv(DATA2, "clean_data.csv", sep = ",")
 ```
 
 
@@ -196,6 +226,17 @@ List all kids who:
 3. have not completed all trials. Tip: Use pipes to solve this
 
 ```{r}
+# To load data
+clean_data=read.csv("clean_data.csv")
+clean_data=clean_data[,-1]
+
+# Mean length of untterances of more than 2.7 morphemes
+filter(clean_data, CHI_MLU > 2.7)
+
+# Less than 1.5 morphemes on first visit
+filter(clean_data, VISIT == 1 & CHI_MLU < 1.5)
+
+
 
 
 ```
@@ -207,7 +248,15 @@ USING ARRANGE
 2. Sort kids to find the kid who produced the least amount of words on the 1st visit.
 
 ```{r}
+# To sort the kids to find the one that produced the most words on the 6th visit
+Visit_6=subset(clean_data, clean_data$VISIT==6)
+arrange(Visit_6, c(Visit_6$tokens_CHI))
+# ID = 55 produced the most words
 
+# To sort the kids to find the one that produced the least amount of words on the 1st visit
+Visit_1=subset(clean_data, clean_data$VISIT==1)
+arrange(Visit_1, c(Visit_1$tokens_CHI))
+#ID = 57 produced the least amount of words on the first visit
 
 ```
 
@@ -217,6 +266,14 @@ USING SELECT
 2. What happens if you include the name of a variable multiple times in a select() call?
 
 ```{r}
+# Subset with only ASD children
+ASD_data=subset(clean_data, Diagnosis == "ASD")
+ASD_data2=select(ASD_data, ID, VISIT, CHI_MLU, tokens_CHI)
+
+# What happens if you include the name of a variable multiple times?
+ASD_data3=select(ASD_data, ID, ID, VISIT, CHI_MLU, tokens_CHI)
+
+# Nothing happens. The variable only appears once. 
 
 ```
 
