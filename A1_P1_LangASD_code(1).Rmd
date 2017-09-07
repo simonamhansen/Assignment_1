@@ -44,6 +44,7 @@ setwd("C:/Users/simon/Google Drev/Uni/Methods3/Assignment_1")
 # To load packages
 library(plyr)
 library(stringr)
+library(tidyverse)
 
 ```
 
@@ -92,8 +93,6 @@ Tip: There is a package called stringr, which will be very handy for you also in
 lu_data$VISIT=str_extract(lu_data$VISIT, "\\d")
 token_data$VISIT=str_extract(token_data$VISIT, "\\d")
 
-
-
 ```
 
 2c. We also need to make a small adjustment to the content of the Child.ID coloumn in the demographic data. Within this column, names that are not abbreviations do not end with "." (i.e. Adam), which is the case in the other two data sets (i.e. Adam.). If The content of the two variables isn't identical the data sets will not be merged sufficiently.
@@ -108,7 +107,12 @@ Tip: You will have to do identical work for both data sets, so to save time on t
 
 
 ```{r}
+#To remove punctuation to streamline the string
+lu_data$ID=gsub('[[:punct:] ]+','',lu_data$ID)
+demo_data$ID=gsub('[[:punct:] ]+','',demo_data$ID)
+token_data$ID=gsub('[[:punct:] ]+','',token_data$ID)
 
+               
 ```
 
 2d. Now that the nitty gritty details of the different data sets are fixed, we want to make a subset of each data set only containig the variables that we wish to use in the final data set.
@@ -126,7 +130,10 @@ The variables we need are: Child.ID, Visit, Ethnicity, Diagnosis, Gender, Age, A
 It would be smart to rename the MullenRaw and ExpressiveLangRaw into something you can remember (i.e. nonVerbalIQ, verbalIQ)
 
 ```{r}
-
+#To subset interesting variables
+demo_sub=select(demo_data, ID, VISIT, Ethnicity, Gender, Age, Diagnosis, ADOS, MullenRaw, ExpressiveLangRaw)
+lu_sub=select(lu_data, ID, VISIT, MOT_MLU, MOT_LUstd, CHI_MLU, CHI_LUstd)
+token_sub=select(token_data, ID, VISIT, types_MOT, types_CHI, tokens_MOT, tokens_CHI)
 
 ```
 
