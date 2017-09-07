@@ -210,7 +210,7 @@ DATA2$Diagnosis=revalue(DATA2$Diagnosis, c("A"="ASD", "B"="TD"))
 Save the data set using into a csv file. Hint: look into write.csv()
 
 ```{r}
-write.csv(DATA2, "clean_data.csv", sep = ",")
+write.csv(DATA2, "clean_data.csv")
 ```
 
 
