@@ -78,11 +78,11 @@ Tip: Look into the package data.table, or google "how to rename variables in R"
 ```{r}
 
 #To rename variable names
-demo_data=rename(demo_data, c("Child.ID"="ID"))
-lu_data=rename(lu_data, c("SUBJ" = "ID"))
-token_data=rename(token_data, c("SUBJ" = "ID"))
+demo_data=plyr::rename(demo_data, c("Child.ID"="ID"))
+lu_data=plyr::rename(lu_data, c("SUBJ" = "ID"))
+token_data=plyr::rename(token_data, c("SUBJ" = "ID"))
 
-demo_data=rename(demo_data, c("Visit" = "VISIT" ))
+demo_data=plyr::rename(demo_data, c("Visit" = "VISIT" ))
 ```
 
 2b. Find a way to homogeneize the way "visit" is reported. If you look into the original data sets, you will see that in the LU data and the Token data, Visits are called "visit 1" in stead of just 1 (which is the case in the demographic data set).
@@ -90,7 +90,7 @@ Tip: There is a package called stringr, which will be very handy for you also in
 
 ```{r}
 #To change the values of visit
-lu_data$VISIT=str_extract(lu_data$VISIT, "\\d")
+lu_data$VISIT=str_extract(lu_data$VISIT, "\\d") #This code only keeps digits
 token_data$VISIT=str_extract(token_data$VISIT, "\\d")
 
 ```
@@ -108,7 +108,7 @@ Tip: You will have to do identical work for both data sets, so to save time on t
 
 ```{r}
 #To remove punctuation to streamline the string
-lu_data$ID=gsub('[[:punct:] ]+','',lu_data$ID)
+lu_data$ID=gsub('[[:punct:] ]+','',lu_data$ID) # This code removes all "."
 demo_data$ID=gsub('[[:punct:] ]+','',demo_data$ID)
 token_data$ID=gsub('[[:punct:] ]+','',token_data$ID)
 
@@ -191,11 +191,11 @@ Tip: as.numeric() might be a useful function, but not alone.
 Tip: Google "how to rename levels in R".
 
 ```{r}
-# Visits is already numeric 
-
 # To make ID anonymous
 DATA2$ID=as.factor(DATA2$ID)
 DATA2$ID=as.numeric(DATA2$ID)
+
+# Visits is already numeric 
 
 # To change the gender variable
 DATA2$Gender=as.factor(DATA2$Gender)
@@ -228,7 +228,7 @@ List all kids who:
 ```{r}
 # To load data
 clean_data=read.csv("clean_data.csv")
-clean_data=clean_data[,-1]
+clean_data=clean_data[,-1] #Omits the first column which we are not interested in
 
 # Mean length of untterances of more than 2.7 morphemes
 filter(clean_data, CHI_MLU > 2.7)
@@ -236,7 +236,9 @@ filter(clean_data, CHI_MLU > 2.7)
 # Less than 1.5 morphemes on first visit
 filter(clean_data, VISIT == 1 & CHI_MLU < 1.5)
 
-
+# Have not completed all trials
+missed_trials = clean_data %>% group_by(ID) %>% tally()
+filter(missed_trials, n < 6)
 
 
 ```
@@ -284,6 +286,11 @@ USING MUTATE, SUMMARISE and PIPES
 3. The solution to task above enables us to assess the average amount of words produced by each child. Why don't we just use these average values to describe the language production of the children? What is the advantage of keeping all the data?
 
 ```{r}
+# To add a column to the dataset with the mean number of words spoken for everyone
+data2 = mutate(clean_data, Mean_words_all = sum(tokens_CHI)/length(tokens_CHI))
+
+# To add a column to the datset with mean number of words spoken for each child
+data3 = data2 %>% group_by(ID) %>% mutate(Mean_words_CHI = sum(tokens_CHI)/length(tokens_CHI))
 
 # 3. When you average out the amount of words you lose the development that each child undergoes. By using alle the data we are able to compare the development of typically devolping children and autistic children. 
 ```
