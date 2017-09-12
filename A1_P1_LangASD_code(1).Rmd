@@ -286,8 +286,8 @@ USING MUTATE, SUMMARISE and PIPES
 3. The solution to task above enables us to assess the average amount of words produced by each child. Why don't we just use these average values to describe the language production of the children? What is the advantage of keeping all the data?
 
 ```{r}
-# To add a column to the dataset with the mean number of words spoken for everyone
-data2 = mutate(clean_data, Mean_words_all = sum(tokens_CHI)/length(tokens_CHI))
+# To add a column to the dataset with the mean number of words for each visit
+data2 = clean_data %>% group_by(VISIT) %>% mutate (Mean_words_VISIT = sum(tokens_CHI)/length(VISIT))
 
 # To add a column to the datset with mean number of words spoken for each child
 data3 = data2 %>% group_by(ID) %>% mutate(Mean_words_CHI = sum(tokens_CHI)/length(tokens_CHI))
