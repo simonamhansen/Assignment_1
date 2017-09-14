@@ -38,24 +38,46 @@ Describe the participant samples in the dataset (e.g. by diagnosis, age, etc.). 
 
 [HERE GOES YOUR ANSWER]
 
+According to the test conducted the only concern seem to be the age difference. So in general the two groups seem to be well balanced. 
+
 ### Exercise 2) Children learning language: the effects of time and ASD
 Describe linguistic development in TD and ASD children in terms of Mean Length of Utterance (MLU)?
 
 [HERE GOES YOUR ANSWER]
+
+The model suggests a positive relationship between the number of visits and the MLU of the child, b= 0.23, t(60.78) = 9.52, p < .05
+
+According to the model there is no significant influence of the diagnosis on the MLU of the child, b=0.29, (60.08) = 1.91, p > 0.5
+
+So it seems like time has an influence on the child MLU whereas the diagnosis of the child does not influence the child MLU significantly.
 
 ### Exercise 3) Child directed speech as a moving target
 Describe how parental use of language changes over time in terms of MLU. What do you think is going on?
 
 [HERE GOES YOUR ANSWER]
 
+According to the model there is a positive relationship of the number of visits on the MLU of the parents, b = 0.12, t(59.53) = 6.60, p < .05. This seems very reasonable that the mother will start using more complex sentences as the child grows older. 
+
+The model also suggest that the parents of the typically developing children have significantly larger MLU's than those who are parent of autistic children, b= 0.50, t(60.92) = 4.43, p < .05. A possible explanation for this phenomenoum could be that parents of autistic children think that their children have a harder time acquiring language and therefor they try to help them by speaking in shorter utterances that are easier to comprehend. 
+
 ### Exercise 4) Looking into "individual differences" (demographic, clinical or cognitive profiles)
 The dataset contains some additional variables characterizing the kids’ cognitive and clinical profile: ADOS (autism severity), MSEL EL (Expressive Language, that is, verbal IQ, or linguistic skills at first visit as assessed by a psychologist using Mullen Scales of Early Learning), MSEL VR (Visual Reception, used as a proxy for non verbal IQ at first visit), Age, Gender, Ethnicity. Would it make sense to add any of them to your model of linguistic trajectories? Create the best possible model (the one that best explain the data, with MLU as outcome). Next time your model will be tested on new participants, and we will proclaim a winner. Describe your strategy to select the best models (how did you choose the variables to include?) and send the code to Riccardo and Celine.
 
 [HERE GOES YOUR ANSWER]
 
+In our model we have chosen to predict the MLU of the children using the variables: Visit, mlu of the mother and the verbal IQ. The decision of using excatly these variables were motivated by theory and by testing different models to see which one would have the most explanatory power.
+
 ### [OPTIONAL] Exercise 5) Comment on how the three linguistic variables measure linguistic performance (the so-called "construct validity" of the measures). Do they express the same variance?
 
 [HERE GOES YOUR ANSWER]
+
+MLU: MLU is the mean length of utterance and therefore is an indicator of the childs ability to construct sentences. The longer the mlu the more advanced a setence can be made.
+
+Types: Types is a measure of how many unique words the child uses during one session. This tells us something about the size of the vocabulary that the child posesses. The more words the child knows the easier it is to engange in different kinds of conversation and it might also be easier to specify things (such as using "owl" instead of just "bird")
+
+Tokens: Tokens is a meaure of how many words the child uses in total during one session. This variable might be the least informative one in regards to linguistic skills as the child could say "cat" 200 times out of a total of 250 words. However this variable can tell us something about how much the child speaks in general.
+
+While these three linguistic variables might often be correlated they tell us about different aspects of linguistic skills. A child might well know a lot of words, but be unable to put them together into long utterances. Therefor using all three variables can give us a nuanced way of asessing a child's level of linguistic skill.  
 
 ### Structure of the code chunks
 
@@ -92,7 +114,6 @@ library(MuMIn)
 
 ```{r Load Data}
 
-getwd()
 setwd("C:/Users/simon/Google Drev/Uni/Methods3/Assignment_1")
 Data = read.csv("clean_data.csv")
 
@@ -138,13 +159,13 @@ ggplot(data_visit1, aes(x= Diagnosis, y= nonVerbalIQ)) + geom_violin()
 
 [REPORT THE RESULTS]
 
-Age: The typical development children were generally younger, b = -12.63, t(60)=-12.32, p < .05
+Age: ASD children are significantly older than TDs, b = -12.63, t(60)=-12.32, p < .05
 
-Gender: The typically development b= -0.37 z(60) = -0.52 p > .05
+Gender: Our results suggest that gender has a non-signficant influence on the diagnosis, b= -0.37 z(60) = -0.52 p > .05
 
-non-verbal IQ: The typically development children generally had a lower non-verbal IQ, b = -0,90 t(60) = -0.76, p > .05
+non-verbal IQ: Our results suggest that there is a non-significant difference between the non-verbal IQ of TDs and ASDs, b = -0,90 t(60) = -0.76, p > .05
 
-Verbal IQ: The typical development children generally had a higher verbal IQ, b = 2.91, t(60) = 1.79, p > .05
+Verbal IQ: Our results suggest that there is a non-significant difference between the verbal IQ of TDs and ASDs, b = 2.91, t(60) = 1.79, p > .05
 
 
 ## Let's test hypothesis 1: Children with ASD display a language impairment  (Exercise 2)
@@ -158,7 +179,7 @@ Remember to plot the data first and then to run a statistical test.
 - Which variable(s) should be included as random factors?
 
 ```{r}
-# To create a plot
+# To create a plot which makes us able to get an overview of the data. NOTE: The plot does not represent the model!
 ggplot(Data, aes(y=CHI_MLU, x= VISIT, colour = Diagnosis)) + geom_jitter() + geom_smooth(method = lm) 
 
 # To make a mixed effects model
@@ -170,6 +191,8 @@ summary(m5)
 How would you evaluate whether the model is a good model?
 
 ```{r}
+# By comparing the model to a null model using anova and getting the r squared for the model
+
 # To make null model
 m_null = lmer(CHI_MLU ~ 1 + VISIT + (1 + VISIT|ID), Data, REML = FALSE)
 
@@ -206,8 +229,8 @@ Linguistic development of children MLU is affected by ... [COMPLETE]
 
 ```{r}
 
-# To create a plot
-ggplot(Data, aes(y=MOT_MLU, x= VISIT, colour = Diagnosis)) + geom_point() + geom_smooth(method = lm) 
+# To create a plot which makes us able to get an overview of the data. NOTE: The plot does not represent the model!
+ggplot(Data, aes(y=MOT_MLU, x= VISIT, colour = Diagnosis)) + geom_jitter() + geom_smooth(method = lm) 
 
 # To make a mixed effects model
 m6 = lmer(MOT_MLU ~ 1 + VISIT + Diagnosis + (1 + VISIT|ID), Data, REML = FALSE)
