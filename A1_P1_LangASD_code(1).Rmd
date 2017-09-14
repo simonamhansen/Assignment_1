@@ -231,7 +231,7 @@ clean_data=read.csv("clean_data.csv")
 clean_data=clean_data[,-1] #Omits the first column which we are not interested in
 
 # Mean length of untterances of more than 2.7 morphemes
-filter(clean_data, CHI_MLU > 2.7)
+clean_data %>% group_by(ID) %>% summarise(MEAN = mean(CHI_MLU)) %>% filter(MEAN >2.7)
 
 # Less than 1.5 morphemes on first visit
 filter(clean_data, VISIT == 1 & CHI_MLU < 1.5)
