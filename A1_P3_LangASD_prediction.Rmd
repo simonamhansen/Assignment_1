@@ -82,9 +82,9 @@ demo_data$ID=gsub('[[:punct:] ]+','',demo_data$ID)
 token_data$ID=gsub('[[:punct:] ]+','',token_data$ID)
 
 #To subset interesting variables
-demo_sub=select(demo_data, ID, VISIT, Ethnicity, Gender, Age, Diagnosis, ADOS, MullenRaw, ExpressiveLangRaw)
-lu_sub=select(lu_data, ID, VISIT, MOT_MLU, MOT_LUstd, CHI_MLU, CHI_LUstd)
-token_sub=select(token_data, ID, VISIT, types_MOT, types_CHI, tokens_MOT, tokens_CHI)
+demo_sub=dplyr::select(demo_data, ID, VISIT, Ethnicity, Gender, Age, Diagnosis, ADOS, MullenRaw, ExpressiveLangRaw)
+lu_sub= dplyr::select(lu_data, ID, VISIT, MOT_MLU, MOT_LUstd, CHI_MLU, CHI_LUstd)
+token_sub=dplyr::select(token_data, ID, VISIT, types_MOT, types_CHI, tokens_MOT, tokens_CHI)
 
 # To rename variables
 demo_sub=plyr::rename(demo_sub, c("MullenRaw" = "nonVerbalIQ"))
@@ -98,7 +98,7 @@ DATA=merge(data1, token_sub)
 Visit1_data=subset(DATA, DATA$VISIT == 1)
 
 #To only select relevant columns
-ID_visit=select(Visit1_data, ID, ADOS, nonVerbalIQ, verbalIQ)
+ID_visit=dplyr::select(Visit1_data, ID, ADOS, nonVerbalIQ, verbalIQ)
 
 #To omit irrelevant NA columns from dataset 
 DATA_NEW=DATA[,-7:-9]
@@ -125,6 +125,7 @@ write.csv(DATA2, "test_data.csv")
 # To load test data
 test_data=read.csv("test_data.csv")
 test_data = test_data[,-1]
+#test_data$ID = test_data$ID + 100
 
 # To test the model on the test dataset
 rmse(m1, test_data)
