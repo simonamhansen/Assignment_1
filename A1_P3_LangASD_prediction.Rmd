@@ -47,6 +47,7 @@ library(stringr)
 library(tidyverse)
 library(merTools)
 library(caret)
+library(Metrics)
 
 # To load training datasat
 train_data=read.csv("clean_data.csv")
@@ -58,7 +59,7 @@ summary(m1)
 r.squaredGLMM(m1)
 
 # To find the root mean square error
-rmse(m1, train_data)
+modelr::rmse(m1, train_data)
 
 # To load test data 
 lu_data=read.csv("LU_test.csv")
@@ -128,7 +129,7 @@ test_data = test_data[,-1]
 #test_data$ID = test_data$ID + 100
 
 # To test the model on the test dataset
-rmse(m1, test_data)
+modelr::rmse(m1, test_data)
 
 # To get prediction interval for each participant for each visit 
 predictInterval(merMod = m1, newdata = test_data, level = 0.95, n.sims = 1000, stat = "median", type="linear.prediction",include.resid.var = TRUE)
@@ -152,19 +153,73 @@ In this exercise you have to use cross-validation to calculate the predictive er
 - Bonus Question 3: compare the cross-validated predictive error against the actual predictive error on the test data
 
 ```{r}
-# To create the model
-m2 = lmer(CHI_MLU ~ 1 + VISIT + Diagnosis +(1 + VISIT|ID), train_data, REML = FALSE)
-summary(m2)
-r.squaredGLMM(m2)
+
+# To make ID factorial
+train_data$ID = as.factor(train_data$ID)
+test_data$ID = as.factor(test_data$ID)
 
 # To create folds
-folds = createFolds(train_data$ID, 5)
+folds = createFolds(unique(train_data$ID), 4)
 
 # To create a loop
-for (i in folds){
-  train(train_data, )
+list_test = c()
+list_train = c()
+for (fold in folds){
   
+  # Create training data set
+  train2 = subset(train_data,! (ID %in% fold))  
+  
+  # Create a test data set
+  test2 = subset(train_data, (ID %in% fold)) 
+  
+  # To train model
+  m2 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT + Diagnosis +(1 + VISIT|ID), train2, REML = FALSE)
+  
+  # To get RMSE for train data
+  train_res=Metrics::rmse(train2$CHI_MLU, predict(m2, train2))
+  
+  # To get RMSE for test data
+  Pred = predict(m2, test2, allow.new.levels = T)
+  test_res = Metrics::rmse(test2$CHI_MLU, Pred)
+  
+  list_test = c(list_test, test_res)
+  list_train = c(list_train, train_res)
 }
+
+# To get the mean performance of the cross validated model
+mean(list_test)
+mean(list_train)
+
+# To try out a more complicated model
+list_test2 = c()
+list_train2 = c()
+for (fold in folds){
+  
+  # Create training data set
+  train2 = subset(train_data,! (ID %in% fold))  
+  
+  # Create a test data set
+  test2 = subset(train_data, (ID %in% fold)) 
+  
+  # To train model
+  m3 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT + MOT_MLU + verbalIQ + (1 + VISIT|ID), train_data, REML = FALSE)
+  
+  # To get RMSE for train data
+  train_res=Metrics::rmse(train2$CHI_MLU, predict(m3, train2))
+  
+  # To get RMSE for test data
+  Pred = predict(m3, test2, allow.new.levels = T)
+  test_res = Metrics::rmse(test2$CHI_MLU, Pred)
+  
+  list_test2 = c(list_test2, test_res)
+  list_train2 = c(list_train2, train_res)
+}
+
+# To get the mean performance of the cross validated model
+mean(list_test2)
+mean(list_train2)
+
+# The new model performs equally on the train data. However it performs a lot better on the test data. 
 
 ```
 
@@ -182,6 +237,70 @@ You want to evaluate:
 - how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
 
 [HERE GOES YOUR ANSWER]
+
+```{r}
+# To get test data non anonymised 
+DATA3 = merge(DATA_NEW, ID_visit, by = "ID")
+# To change the gender variable
+DATA3$Gender=as.factor(DATA2$Gender)
+DATA3$Gender=revalue(DATA2$Gender, c("1"="M", "2"="F"))
+
+# To change diagnosis variable
+DATA3$Diagnosis=revalue(DATA2$Diagnosis, c("A"="ASD", "B"="TD"))
+
+# To only get data for Bernie
+Bernie_data = DATA3[DATA3$ID == "Bernie",] 
+
+# To create a model based on TD's
+TD_data = train_data[train_data$Diagnosis == "TD",]
+model_TD = lmer(CHI_MLU ~ 1 + VISIT + MOT_MLU + verbalIQ + (1 + VISIT|ID), TD_data, REML = FALSE)
+summary(model_TD)
+
+# To compare Bernie to the average TD
+# Equation: -1.69 + 0.285*x (VISIT) + 0.4896*x (MOT_MLU) + 0.0456*x (verbalIQ)
+myfunction = function(x, y, z) {
+  -1.69 + 0.285*x + 0.4896*y + 0.0456*z
+}
+
+# Visit 1
+Bernie_visit1=myfunction(1, 3.414397, 28)
+dif_visit1 = 1.984456 - Bernie_visit1   
+
+# Visit 2
+Bernie_visit2=myfunction(2, 5.125000 ,28)
+dif_visit2 = 2.544444 - Bernie_visit2
+
+# Visit 3
+Bernie_visit3=myfunction(3, 4.368557 ,28)
+dif_visit3 = 3.353191 - Bernie_visit3
+
+# Visit 4
+Bernie_visit4=myfunction(4, 4.516529 ,28)
+dif_visit4 = 3.183099 - Bernie_visit4
+
+# Visit 5
+Bernie_visit5=myfunction(5, 4.019565 ,28)
+dif_visit5 = 3.173252 - Bernie_visit5
+
+# Visit 6
+Bernie_visit6=myfunction(6, 3.818557 ,28)
+dif_visit6 = 3.448413 - Bernie_visit6
+
+# To create a dataframe 
+Bernie_comp=data.frame(c(Bernie_visit1, Bernie_visit2, Bernie_visit3, Bernie_visit4, Bernie_visit5, Bernie_visit6), c(dif_visit1, dif_visit2, dif_visit3, dif_visit4, dif_visit5, dif_visit6))
+
+# To create a plot
+plot(Bernie_comp[,2])
+# From the plot it seems that Bernie performs better than the average TD (except Visit 2)
+
+
+# Using the predict function to compare VISIT 6
+Bernie_6 = Bernie_data[6,] # To subset visit 6
+Bernie_pred=predict(model_TD, Bernie_6, allow.new.levels = T) 
+Bernie_6$CHI_MLU - Bernie_pred # To get the difference between predicted and acutual value
+# Bernie's MLU is 0.22 better than predicted by the model. This means that compared to a typical developing child with the same Verbal IQ he is doing good. 
+
+```
 
 ### OPTIONAL: Exercise 4) Model Selection via Information Criteria
 Another way to reduce the bad surprises when testing a model on new data is to pay close attention to the relative information criteria between the models you are comparing. Let's learn how to do that!
