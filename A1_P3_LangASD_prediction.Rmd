@@ -32,8 +32,6 @@ How did your models from last time perform? In this exercise you have to compare
 - optional: predictions are never certain, can you identify the uncertainty of the predictions? (e.g. google predictinterval())
 
 
-[HERE GOES YOUR ANSWER]
-
 ```{r}
 # To set working directory
 setwd("C:/Users/simon/Google Drev/Uni/Methods3/Assignment_1")
@@ -48,6 +46,7 @@ library(tidyverse)
 library(merTools)
 library(caret)
 library(Metrics)
+library(ggplot2)
 
 # To load training datasat
 train_data=read.csv("clean_data.csv")
@@ -126,15 +125,22 @@ write.csv(DATA2, "test_data.csv")
 # To load test data
 test_data=read.csv("test_data.csv")
 test_data = test_data[,-1]
-#test_data$ID = test_data$ID + 100
+test_data$ID = test_data$ID + 100
 
 # To test the model on the test dataset
-modelr::rmse(m1, test_data)
+Metrics::rmse(test_data$CHI_MLU, predict(m1, test_data, allow.new.levels = T))
+
+# To test the model on the train dataset
+Metrics::rmse(train_data$CHI_MLU, predict(m1, train_data, allow.new.levels = T))
 
 # To get prediction interval for each participant for each visit 
 predictInterval(merMod = m1, newdata = test_data, level = 0.95, n.sims = 1000, stat = "median", type="linear.prediction",include.resid.var = TRUE)
 
 ```
+
+[HERE GOES YOUR ANSWER]
+
+The RMSE on the training data is 0.335 and the RMSE on the test data is 0.53. Intuitively it makes very good sense that the model is better at predicting the data that it is build on rather than new data.  
 
 ### Exercise 2) Model Selection via Cross-validation (N.B: ChildMLU!)
 
@@ -202,7 +208,7 @@ for (fold in folds){
   test2 = subset(train_data, (ID %in% fold)) 
   
   # To train model
-  m3 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT + MOT_MLU + verbalIQ + (1 + VISIT|ID), train_data, REML = FALSE)
+  m3 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT + MOT_MLU + verbalIQ + (1 + VISIT|ID), train2, REML = FALSE)
   
   # To get RMSE for train data
   train_res=Metrics::rmse(train2$CHI_MLU, predict(m3, train2))
@@ -221,7 +227,44 @@ mean(list_train2)
 
 # The new model performs equally on the train data. However it performs a lot better on the test data. 
 
+
+
+# To try out a third model
+list_test3 = c()
+list_train3 = c()
+for (fold in folds){
+  
+  # Create training data set
+  train2 = subset(train_data,! (ID %in% fold))  
+  
+  # Create a test data set
+  test2 = subset(train_data, (ID %in% fold)) 
+  
+  # To train model
+  m4 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT*Diagnosis + MOT_MLU + verbalIQ + (1 + VISIT|ID), train2, REML = FALSE)
+  
+  # To get RMSE for train data
+  train_res=Metrics::rmse(train2$CHI_MLU, predict(m4, train2))
+  
+  # To get RMSE for test data
+  Pred = predict(m4, test2, allow.new.levels = T)
+  test_res = Metrics::rmse(test2$CHI_MLU, Pred)
+  
+  list_test3 = c(list_test3, test_res)
+  list_train3 = c(list_train3, train_res)
+}
+
+# To get the mean performance of the cross validated model
+mean(list_test3)
+mean(list_train3)
+
+# According to RMSE the third model outperforms the other two
+
 ```
+
+[HERE GOES YOUR ANSWER]
+
+3 models where trained and tested using cross-validation. Model 4 was the best model with the following RMSE values (Train = 0.34, Test = 0.55). In this model the Child MLU was predicted by the fixed effect which consisted of an interaction effect of Diagnosis and Visit as well as the Mother MLU and the Verbal IQ. ID was included as an random effect. Model 2 has the follwoing RMSE values (Train = 0.34, Test = 0.81) and Model 3 (Train = 0.34, Test = 0.61). This means that model 4 is the best at prediciting the data.
 
 ### Exercise 3) Assessing the single child
 
@@ -236,7 +279,6 @@ You want to evaluate:
 
 - how does the child fare compared to the model predictions at Visit 6? Is the child below or above expectations? (tip: use the predict() function on Bernie's data only and compare the prediction with the actual performance of the child)
 
-[HERE GOES YOUR ANSWER]
 
 ```{r}
 # To get test data non anonymised 
@@ -287,10 +329,15 @@ Bernie_visit6=myfunction(6, 3.818557 ,28)
 dif_visit6 = 3.448413 - Bernie_visit6
 
 # To create a dataframe 
-Bernie_comp=data.frame(c(Bernie_visit1, Bernie_visit2, Bernie_visit3, Bernie_visit4, Bernie_visit5, Bernie_visit6), c(dif_visit1, dif_visit2, dif_visit3, dif_visit4, dif_visit5, dif_visit6))
+Visits = c(1,2,3,4,5,6)
+Category = c("TD", "TD","TD","TD","TD","TD", "Bernie","Bernie","Bernie","Bernie","Bernie","Bernie")
+MLU = c(Bernie_visit1, Bernie_visit2, Bernie_visit3, Bernie_visit4, Bernie_visit5, Bernie_visit6, Bernie_data$CHI_MLU)
+
+
+Bernie_comp=data.frame(Visits, Category, MLU)
 
 # To create a plot
-plot(Bernie_comp[,2])
+ggplot(Bernie_comp, aes(x = Visits, y= MLU, colour = Category)) + geom_smooth() + geom_point()
 # From the plot it seems that Bernie performs better than the average TD (except Visit 2)
 
 
@@ -302,6 +349,11 @@ Bernie_6$CHI_MLU - Bernie_pred # To get the difference between predicted and acu
 
 ```
 
+[HERE GOES YOUR ANSWER]
+
+Comparing Bernie to typically developing children with the same Verbal IQ and Mother MLU we see that he is actually above average on all visists (except visit 2). Therefor it seem like there is no need to introduce an intervention.
+
+
 ### OPTIONAL: Exercise 4) Model Selection via Information Criteria
 Another way to reduce the bad surprises when testing a model on new data is to pay close attention to the relative information criteria between the models you are comparing. Let's learn how to do that!
 
@@ -310,6 +362,39 @@ Re-create a selection of possible models explaining ChildMLU (the ones you teste
 Then try to find the best possible predictive model of ChildMLU, that is, the one that produces the lowest information criterion.
 
 - Bonus question for the optional exercise: are information criteria correlated with cross-validated RMSE? That is, if you take AIC for Model 1, Model 2 and Model 3, do they co-vary with their cross-validated RMSE?
+
+```{r}
+
+m5 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT + MOT_MLU + verbalIQ + (1 + VISIT|ID), train_data, REML = FALSE)
+summary(m5)
+
+m6 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT + Diagnosis +(1 + VISIT|ID), train_data, REML = FALSE)
+summary(m6)
+
+m7 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT*Diagnosis + MOT_MLU + verbalIQ + (1 + VISIT|ID), train2, REML = FALSE)
+summary(m7)
+
+# The AIC and BIC is lower in model 5 compared to model 6. And therefor this is the better model. This corresponds very nicely with the results optained by the RMSE. The same pattern applies to model 7 compared to model 5, where model 7 outperforms model 5 on all parameters
+
+# To check whether AIC is correlated with RMSE on test data
+AIC_1= c(505.5, 605.4, 357.4)
+RMSE_1=c(0.6112,0.8108, 0.5538)
+cor_data = data.frame(AIC_1, RMSE_1)
+cor(cor_data, method = "pearson") # To make corelation
+
+# The AIC and the RMSE from the cross validation are highly correlated
+
+# To create a plot
+
+ggplot(cor_data, aes(AIC_1, RMSE_1)) + geom_point() + geom_smooth(method = "lm")
+
+```
+
+[HERE GOES YOUR ANSWER]
+
+Model 7 (earlier model 4) is still the best when AIC is used to evaluate model performance. 
+
+Performing a correlation test we see that the AIC is highly correlated with the RMSE of the respective models (r=.91). 
 
 ### OPTIONAL: Exercise 5): Using Lasso for model selection
 Welcome to the last secret exercise. If you have already solved the previous exercises, and still there's not enough for you, you can expand your expertise by learning about penalizations. Check out this tutorial: http://machinelearningmastery.com/penalized-regression-in-r/ and make sure to google what penalization is, with a focus on L1 and L2-norms. Then try them on your data!

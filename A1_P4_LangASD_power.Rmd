@@ -1,0 +1,146 @@
+---
+title: "Assignment 1 - Language Development in ASD - part 4"
+author: "Simon A. M. Hansen"
+date: "5/10-2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Welcome to the fourth exciting part of the Language Development in ASD exercise
+
+In this exercise we will assess how many participants we would need to adequately replicate our findings (ensuring our sample size is adequate, our alpha at 0.05 and our beta at 0.8).
+
+### Exercise 1
+
+How much power does your study have (if your model estimates are quite right)?
+- [GitHub]Load your dataset, fit your favorite model, assess power for your main effects and interactions of interest.
+- Report the power analysis and comment on what you can (or cannot) use its estimates for.
+
+```{r}
+# To set working directory 
+setwd("C:/Users/simon/Google Drev/Uni/Methods3/Assignment_1")
+
+# To load relevant libaries
+library(lmerTest); library(simr)
+
+# To load the data
+data=read.csv("clean_data.csv")
+data=data[,-1]
+
+# To train favourite model
+m1 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT*Diagnosis + (1 + VISIT|ID), data, REML = FALSE)
+summary(m1)
+m2 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT+Diagnosis + (1 + VISIT|ID), data, REML = FALSE)
+summary(m2)
+
+powerVISIT=powerSim(m2, fixed("VISIT"),nsim = 200)
+powerDiagnosis = powerSim(m2, fixed("Diagnosis"),nsim = 200)
+powerInteraction = powerSim(m1, fixed("VISIT:Diagnosis"),nsim = 200)
+
+powerVISIT
+powerDiagnosis
+powerInteraction 
+
+```
+
+[HERE GOES YOUR ANSWER]
+
+Visit = 100 % (98.17, 100)
+Diagnosis = 50 % (42.87, 57.13)
+Interaction = 100 % (98.17, 100)
+
+The power analysis is only valid if the effect size is correct which depends on the power of the study. If the study was underpowered the effect sizes are questionable. 
+
+### Exercise 2
+
+How would you perform a more conservative power analysis?
+- Identify and justify a minimum effect size for each of your relevant effects
+- [GitHub] take the model from exercise 1 and replace the effects with the minimum effect size that you'd accept.
+- [GitHub] assess the power curve by Child.ID, identifying an ideal number of participants to estimate each effect
+- OPTIONAL if your power estimates do not reach an acceptable threshold simulate additional participants and repeat the previous analysis
+- Report the power analysis and comment on what you can (or cannot) use its estimates for.
+
+```{r}
+
+# To set minimum interesting effect sizes
+fixef(m1)["VISIT"] = 0.05
+fixef(m1)["DiagnosisTD"] = -0.10
+fixef(m1)["VISIT:DiagnosisTD"] = 0.15
+
+# To make a power curve
+powerCurveV = powerCurve(m1, fixed("VISIT:Diagnosis"),along="ID", nsim=200)
+plot(powerCurveV)
+
+### Riccardo's clumsy function to simulate new participants
+### TO DO points are only notes for myself, so not part of the assignment
+
+createNewData <- function (participants,visits,model){
+  # participants is the number of subjects
+  # visits is the number of visits
+  # TO DO: LOOP THROUGH ALL FE ROWS AND AUTOMATICALLY EXTRACT NAMES OF FIXED EFFECTS AND ESTIMATES
+  fe <- fixef(model)
+  Intercept <- fe[1] #intercept
+  bVisit <- fe[2] #visit
+  bDiagnosis <- fe[3] #diagnosis
+  bVisitDiagnosis <- fe[4] #visit diagnosis interaction
+  # TO DO: INTEGRATE STANDARD ERROR?
+  
+  # TO DO: LOOP THROUGH ALL VC COMPONENTS AND AUTOMATICALLY EXTRACT NAMES OF EFFECTS AND ESTIMATES
+  vc<-VarCorr(model) # variance component
+  sigmaSubject <- as.numeric(attr(vc[[1]],"stddev")[1]) # random intercept by subject
+  sigmaVisit <- as.numeric(attr(vc[[1]],"stddev")[2]) # random slope of visit over subject
+  sigmaResiduals <- as.numeric(attr(vc,"sc"))
+  sigmaCorrelation <- as.numeric(attr(vc[[1]],"correlation")[2])
+  
+  # Create an empty dataframe
+  d=expand.grid(Visit=1:visits,Child.ID=1:participants)
+  # Randomly sample from a binomial (to generate the diagnosis)
+  condition <- sample(rep(0:1, participants/2))
+  d$Diagnosis<-condition[d$Child.ID]
+  d$Diagnosis[is.na(d$Diagnosis)]<-1
+  
+  ## Define variance covariance matrices:
+  Sigma.u<-matrix(c(sigmaSubject^2,
+                    sigmaCorrelation*sigmaSubject*sigmaVisit,
+                    sigmaCorrelation*sigmaSubject*sigmaVisit,
+                    sigmaVisit^2),nrow=2)
+  
+  ## generate new fake participants (column1=RandomIntercept, column2=RandomSlope)
+  u<-mvrnorm(n=participants,
+             mu=c(0,0),Sigma=cov(ranef(model)$Child.ID))
+  
+  ## now generate fake data:
+  ### the outcome is extracted from a gaussian with
+  ### the solution to the model's equation as mean and
+  ### the residual standard deviation as standard deviation 
+  d$CHI_MLU <- rnorm(participants*visits,
+                     (Intercept+u[,1]) +
+                     (bVisit+u[,2])*d$Visit + 
+                     bDiagnosis*d$Diagnosis ,sigmaResiduals)  
+  
+  return(d)
+}
+```
+
+[HERE GOES YOUR ANSWER]
+
+The effect size of the interaction effect of diagnosis and visit on MLU was set to 0.15. This decision was based on results from previous studies. The effect was lowered from previous study to try to make a more conservative estimate of the effect size. This is because the effect size reported by previous studies might be skewed due to low power. 
+
+Based on the power analysis 35 participants seem to be adequate to achieve a beta of 0.80 for the interaction effect which is the convention. 
+
+
+### Exercise 3
+
+Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). Identify the power for each relevant effect and discuss whether it's worth to run the study and why.
+
+
+```{r}
+
+
+
+```
+
+
