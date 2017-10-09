@@ -24,7 +24,7 @@ How much power does your study have (if your model estimates are quite right)?
 setwd("C:/Users/simon/Google Drev/Uni/Methods3/Assignment_1")
 
 # To load relevant libaries
-library(lmerTest); library(simr)
+library(lmerTest); library(simr); library(MASS); library(plyr)
 
 # To load the data
 data=read.csv("clean_data.csv")
@@ -35,10 +35,11 @@ m1 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT*Diagnosis + (1 + VISIT|ID), data, REML =
 summary(m1)
 m2 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT+Diagnosis + (1 + VISIT|ID), data, REML = FALSE)
 summary(m2)
+m1_normalbeta = lmerTest::lmer(CHI_MLU ~ 1 + VISIT*Diagnosis + (1 + VISIT|ID), data, REML = FALSE)
 
-powerVISIT=powerSim(m2, fixed("VISIT"),nsim = 200)
-powerDiagnosis = powerSim(m2, fixed("Diagnosis"),nsim = 200)
-powerInteraction = powerSim(m1, fixed("VISIT:Diagnosis"),nsim = 200)
+powerVISIT=powerSim(m2, fixed("VISIT"),nsim = 100)
+powerDiagnosis = powerSim(m2, fixed("Diagnosis"),nsim = 100)
+powerInteraction = powerSim(m1, fixed("VISIT:Diagnosis"),nsim = 100)
 
 powerVISIT
 powerDiagnosis
@@ -70,9 +71,20 @@ fixef(m1)["VISIT"] = 0.05
 fixef(m1)["DiagnosisTD"] = -0.10
 fixef(m1)["VISIT:DiagnosisTD"] = 0.15
 
+fixef(m2)["VISIT"] = 0.05
+fixef(m2)["DiagnosisTD"] = -0.10
+
 # To make a power curve
-powerCurveV = powerCurve(m1, fixed("VISIT:Diagnosis"),along="ID", nsim=200)
+powerCurveI = powerCurve(m1, fixed("VISIT:Diagnosis"),along="ID", nsim=100)
+plot(powerCurveI)
+
+powerCurveD = powerCurve(m2, fixed("Diagnosis"),along="ID", nsim=100)
+plot(powerCurveD)
+
+powerCurveV = powerCurve(m2, fixed("VISIT"),along="ID", nsim=100)
 plot(powerCurveV)
+
+
 
 ### Riccardo's clumsy function to simulate new participants
 ### TO DO points are only notes for myself, so not part of the assignment
@@ -83,7 +95,7 @@ createNewData <- function (participants,visits,model){
   # TO DO: LOOP THROUGH ALL FE ROWS AND AUTOMATICALLY EXTRACT NAMES OF FIXED EFFECTS AND ESTIMATES
   fe <- fixef(model)
   Intercept <- fe[1] #intercept
-  bVisit <- fe[2] #visit
+  bVISIT <- fe[2] #visit
   bDiagnosis <- fe[3] #diagnosis
   bVisitDiagnosis <- fe[4] #visit diagnosis interaction
   # TO DO: INTEGRATE STANDARD ERROR?
@@ -91,26 +103,26 @@ createNewData <- function (participants,visits,model){
   # TO DO: LOOP THROUGH ALL VC COMPONENTS AND AUTOMATICALLY EXTRACT NAMES OF EFFECTS AND ESTIMATES
   vc<-VarCorr(model) # variance component
   sigmaSubject <- as.numeric(attr(vc[[1]],"stddev")[1]) # random intercept by subject
-  sigmaVisit <- as.numeric(attr(vc[[1]],"stddev")[2]) # random slope of visit over subject
+  sigmaVISIT <- as.numeric(attr(vc[[1]],"stddev")[2]) # random slope of visit over subject
   sigmaResiduals <- as.numeric(attr(vc,"sc"))
   sigmaCorrelation <- as.numeric(attr(vc[[1]],"correlation")[2])
   
   # Create an empty dataframe
-  d=expand.grid(Visit=1:visits,Child.ID=1:participants)
+  d=expand.grid(VISIT=1:visits,ID=1:participants)
   # Randomly sample from a binomial (to generate the diagnosis)
   condition <- sample(rep(0:1, participants/2))
-  d$Diagnosis<-condition[d$Child.ID]
+  d$Diagnosis<-condition[d$ID]
   d$Diagnosis[is.na(d$Diagnosis)]<-1
   
   ## Define variance covariance matrices:
   Sigma.u<-matrix(c(sigmaSubject^2,
-                    sigmaCorrelation*sigmaSubject*sigmaVisit,
-                    sigmaCorrelation*sigmaSubject*sigmaVisit,
-                    sigmaVisit^2),nrow=2)
+                    sigmaCorrelation*sigmaSubject*sigmaVISIT,
+                    sigmaCorrelation*sigmaSubject*sigmaVISIT,
+                    sigmaVISIT^2),nrow=2)
   
   ## generate new fake participants (column1=RandomIntercept, column2=RandomSlope)
   u<-mvrnorm(n=participants,
-             mu=c(0,0),Sigma=cov(ranef(model)$Child.ID))
+             mu=c(0,0),Sigma=cov(ranef(model)$ID))
   
   ## now generate fake data:
   ### the outcome is extracted from a gaussian with
@@ -118,29 +130,53 @@ createNewData <- function (participants,visits,model){
   ### the residual standard deviation as standard deviation 
   d$CHI_MLU <- rnorm(participants*visits,
                      (Intercept+u[,1]) +
-                     (bVisit+u[,2])*d$Visit + 
+                     (bVISIT+u[,2])*d$VISIT + 
                      bDiagnosis*d$Diagnosis ,sigmaResiduals)  
   
   return(d)
 }
+
+
+# To simulate additional participants 
+fakedata = createNewData(100, 6, m1_normalbeta)
+
+# To create new IDs
+fakedata$ID=fakedata$ID + 100
+fakedata$Diagnosis=as.factor(fakedata$Diagnosis)
+fakedata$Diagnosis=revalue(fakedata$Diagnosis, c("0"="ASD", "1"="TD"))
+
+# To select relevant variables
+data_simple=dplyr::select(data, ID, VISIT, Diagnosis, CHI_MLU)
+
+# To bind together data
+newdata=rbind(fakedata, data_simple)
+
+# To create new model
+m3 = lmerTest::lmer(CHI_MLU ~ 1 + VISIT+Diagnosis + (1 + VISIT|ID), newdata, REML = FALSE)
+summary(m3)
+
+# To set minimum interesting effect sizes
+fixef(m3)["VISIT"] = 0.05
+fixef(m3)["DiagnosisTD"] = -0.10
+
+powerCurveD2 = powerCurve(m3, fixed("Diagnosis"),along="ID", nsim=10)
+plot(powerCurveD2)
+
+powerCurveV2 = powerCurve(m3, fixed("VISIT"),along="ID", nsim=10)
+plot(powerCurveV2)
 ```
 
 [HERE GOES YOUR ANSWER]
 
-The effect size of the interaction effect of diagnosis and visit on MLU was set to 0.15. This decision was based on results from previous studies. The effect was lowered from previous study to try to make a more conservative estimate of the effect size. This is because the effect size reported by previous studies might be skewed due to low power. 
+The effect size of the interaction effect of diagnosis and visit on MLU was set to 0.15. This decision was based on results from previous studies. However the effects were lowered from the previous study to try to make a more conservative estimate of the effect size. This is because the effect size reported by previous studies might be skewed due to low power. The same principle for chosing the main effect of Diagnosis and Visits applied.
 
-Based on the power analysis 35 participants seem to be adequate to achieve a beta of 0.80 for the interaction effect which is the convention. 
+Based on the power analysis 35 participants seem to be adequate to achieve a beta of 0.80 for the interaction effect which is the convention. For the main effect of visits we seem to need 150 participants to reach an adequate power level. The main effect of diagnosis seem to need more than 200 participants to reach an adequate power level. However these results are of course based upon our assumptions about the minimum interesting effect size.  
 
 
 ### Exercise 3
 
 Assume you have only the resources to collect 30 kids (15 with ASD and 15 TDs). Identify the power for each relevant effect and discuss whether it's worth to run the study and why.
 
+[HERE GOES YOUR ANSWER]
 
-```{r}
-
-
-
-```
-
-
+Assuming that the power analysis was carried out properly it might make sense to look at the interaction effect of diagnosis and visits as it, based on our power analysis, only needs around 35 participant to be able to reach a adequate power level. However the two main effect would require a lot more participants than 30 and therefor it would not make sense to run a study investigating theese main effects. 
