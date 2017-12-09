@@ -331,8 +331,9 @@ dif_visit6 = Bernie_data$CHI_MLU[Bernie_data$VISIT == 6] - TD_visit6
 Visits = c(1,2,3,4,5,6)
 Category = c("TD", "TD","TD","TD","TD","TD", "Bernie","Bernie","Bernie","Bernie","Bernie","Bernie")
 MLU = c(TD_visit1, TD_visit2, TD_visit3, TD_visit4, TD_visit5, TD_visit6, Bernie_data$CHI_MLU)
+dif_visit = c(dif_visit1, dif_visit2, dif_visit3, dif_visit4, dif_visit5, dif_visit6)
 
-
+Dif_comp = data.frame(Visits, dif_visit)
 Bernie_comp=data.frame(Visits, Category, MLU)
 
 # To create a plot
