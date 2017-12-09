@@ -344,6 +344,7 @@ ggplot(Bernie_comp, aes(x = Visits, y= MLU, colour = Category)) + geom_smooth() 
 Bernie_6 = Bernie_data[6,] # To subset visit 6
 Bernie_pred=predict(model_TD, Bernie_6, allow.new.levels = T) 
 Bernie_6$CHI_MLU - Bernie_pred # To get the difference between predicted and acutual value
+
 # Bernie's MLU is 0.22 better than predicted by the model. This means that compared to a typical developing child with the same Verbal IQ he is doing good. 
 
 ```

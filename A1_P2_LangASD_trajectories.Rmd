@@ -46,7 +46,7 @@ Describe linguistic development in TD and ASD children in terms of Mean Length o
 
 [HERE GOES YOUR ANSWER]
 
-According to the mixed effect analysis there is a positive relationship between the number of visits and the MLU of the child, b= 0.23, t(60.78) = 9.52, p < .05. However the model displays  no significant influence of the diagnosis on the MLU of the child, b=0.29, (60.08) = 1.91, p > 0.5
+According to the mixed effect analysis there is a positive relationship between the number of visits and the MLU of the child, b= 0.23, t(60.78) = 9.52, p < .05. However the model displays  no significant influence of the diagnosis on the MLU of the child, b=0.29, (60.08) = 1.91, p > 0.5. Also including diagnosis in the model did not significantly improve the model, X^2(1) = 2.018, p > .05.
 
 So it seems like time/age has an influence on the child MLU whereas the diagnosis of the child does not influence the child's MLU significantly.
 
@@ -60,7 +60,7 @@ According to the model there is a positive relationship of the number of visits 
 The model also suggest that the parents of the typically developing children have significantly larger MLU's than those who are parent of autistic children, b= 0.50, t(60.92) = 4.43, p < .05. A possible explanation for this phenomenoum could be that parents of autistic children think that their children have a harder time acquiring language and therefor they try to help them by speaking in shorter utterances that are easier to comprehend. 
 
 ### Exercise 4) Looking into "individual differences" (demographic, clinical or cognitive profiles)
-The dataset contains some additional variables characterizing the kids’ cognitive and clinical profile: ADOS (autism severity), MSEL EL (Expressive Language, that is, verbal IQ, or linguistic skills at first visit as assessed by a psychologist using Mullen Scales of Early Learning), MSEL VR (Visual Reception, used as a proxy for non verbal IQ at first visit), Age, Gender, Ethnicity. Would it make sense to add any of them to your model of linguistic trajectories? Create the best possible model (the one that best explain the data, with MLU as outcome). Next time your model will be tested on new participants, and we will proclaim a winner. Describe your strategy to select the best models (how did you choose the variables to include?) and send the code to Riccardo and Celine.
+The dataset contains some additional variables characterizing the kids' cognitive and clinical profile: ADOS (autism severity), MSEL EL (Expressive Language, that is, verbal IQ, or linguistic skills at first visit as assessed by a psychologist using Mullen Scales of Early Learning), MSEL VR (Visual Reception, used as a proxy for non verbal IQ at first visit), Age, Gender, Ethnicity. Would it make sense to add any of them to your model of linguistic trajectories? Create the best possible model (the one that best explain the data, with MLU as outcome). Next time your model will be tested on new participants, and we will proclaim a winner. Describe your strategy to select the best models (how did you choose the variables to include?) and send the code to Riccardo and Celine.
 
 [HERE GOES YOUR ANSWER]
 
@@ -75,7 +75,7 @@ r.squaredGLMM(m7)
 
 [HERE GOES YOUR ANSWER]
 
-MLU: MLU is the mean length of utterance and therefore is an indicator of the childs ability to construct sentences. The longer the mlu the more advanced a setence can be made.
+MLU: MLU is the mean length of utterance and therefore is an indicator of the childs ability to construct sentences. The longer the mlu the more "advanced" a setence can be made.
 
 Types: Types is a measure of how many unique words the child uses during one session. This tells us something about the size of the vocabulary that the child posesses. The more words the child knows the easier it is to engange in different kinds of conversation and it might also be easier to specify things (such as using "owl" instead of just "bird")
 
@@ -163,13 +163,13 @@ ggplot(data_visit1, aes(x= Diagnosis, y= nonVerbalIQ)) + geom_violin()
 
 [REPORT THE RESULTS]
 
-Age: ASD children are significantly older than TDs, b = -12.63, t(60)=-12.32, p < .05
+Age: ASD children are significantly older than TDs, b = -12.63, SE = 1.03, t(60)=-12.32, p < .05
 
-Gender: Our results suggest that gender has a non-signficant influence on the diagnosis, b= -0.37 z(60) = -0.52 p > .05
+Gender: Our results suggest that gender has a non-signficant influence on the diagnosis, b= -0.37, SE = 0.70, z(60) = -0.52, p > .05
 
-non-verbal IQ: Our results suggest that there is a non-significant difference between the non-verbal IQ of TDs and ASDs, b = -0,90 t(60) = -0.76, p > .05
+Verbal IQ: Our results suggest that there is a non-significant difference between the verbal IQ of TDs and ASDs, b = 2.91, SE = 1.63, t(60) = 1.79, p > .05
 
-Verbal IQ: Our results suggest that there is a non-significant difference between the verbal IQ of TDs and ASDs, b = 2.91, t(60) = 1.79, p > .05
+non-verbal IQ: Our results suggest that there is a non-significant difference between the non-verbal IQ of TDs and ASDs, b = -0,90, SE = 1.18, t(60) = -0.76, p > .05
 
 
 ## Let's test hypothesis 1: Children with ASD display a language impairment  (Exercise 2)
@@ -214,7 +214,13 @@ First build the different models, then compare them to see which one is better
 
 ```{r}
 
+m_quadratic = lmer(CHI_MLU ~ 1 + VISIT + I(VISIT^2) + Diagnosis + (1 + VISIT|ID), Data, REML = FALSE)
+summary(m_quadratic)
 
+m_cubic = lmer(CHI_MLU ~ 1 + VISIT + I(VISIT^2) + I(VISIT^3) + Diagnosis + (1 + VISIT|ID), Data, REML = FALSE)
+summary(m_cubic)
+
+anova(m5, m_quadratic, m_cubic)
 
 ```
 
@@ -225,7 +231,10 @@ Remember to report:
 - A plain word description of the results
 
 [REPORT THE RESULTS]
-Linguistic development of children MLU is affected by ... [COMPLETE]
+
+An anova revealed that the quadratic mixed effect model is significantly better than the linear mixed effect model x^2(1) = 28.87, p < .05
+
+How to report growth curve?
 
 ## Let's test hypothesis 2: Parents speak equally to children with ASD and TD  (Exercise 3)
 
@@ -244,9 +253,9 @@ summary(m6)
 
 [REPORT THE RESULTS]
 
-According to the model there is a positive relationship of the number of visits on the MLU of the parents, b = 0.12, t(59.53) = 6.60, p < .05. 
+According to the model there is a positive relationship of the number of visits on the MLU of the parents, b = 0.12, SE = 0.02, t(59.53) = 6.60, p < .05. 
 
-The model also suggest that the parents of the typically developing children have significantly larger MLU's than those who are parent of autistic children, b= 0.50, t(60.92) = 4.43, p < .05. 
+The model also suggest that the parents of the typically developing children have significantly larger MLU's than those who are parents of autistic children, b= 0.50, SE = 0.11, t(60.92) = 4.43, p < .05. 
 
 ### Adding new variables (Exercise 4)
 

@@ -37,16 +37,7 @@ How did your models from last time perform? In this exercise you have to compare
 setwd("C:/Users/simon/Google Drev/Uni/Methods3/Assignment_1")
 
 # To load relevant packages
-library(lmerTest)
-library(MuMIn)
-library(modelr)
-library(plyr)
-library(stringr)
-library(tidyverse)
-library(merTools)
-library(caret)
-library(Metrics)
-library(ggplot2)
+library(lmerTest); library(MuMIn); library(modelr); library(plyr); library(stringr); library(tidyverse); library(merTools); library(caret); library(Metrics); library(ggplot2)
 
 # To load training datasat
 train_data=read.csv("clean_data.csv")
@@ -304,41 +295,49 @@ myfunction = function(x, y, z) {
   -1.69 + 0.285*x + 0.4896*y + 0.0456*z
 }
 
+V1=mean(TD_data$MOT_MLU[TD_data$VISIT==1])
+V2=mean(TD_data$MOT_MLU[TD_data$VISIT==2])
+V3=mean(TD_data$MOT_MLU[TD_data$VISIT==3])
+V4=mean(TD_data$MOT_MLU[TD_data$VISIT==4])
+V5=mean(TD_data$MOT_MLU[TD_data$VISIT==5])
+V6=mean(TD_data$MOT_MLU[TD_data$VISIT==6])
+mean(TD_data$verbalIQ)
+
 # Visit 1
-Bernie_visit1=myfunction(1, 3.414397, 28)
-dif_visit1 = 1.984456 - Bernie_visit1   
+TD_visit1=myfunction(1, V1, 20.15)
+dif_visit1 = Bernie_data$CHI_MLU[Bernie_data$VISIT == 1] - TD_visit1   
 
 # Visit 2
-Bernie_visit2=myfunction(2, 5.125000 ,28)
-dif_visit2 = 2.544444 - Bernie_visit2
+TD_visit2=myfunction(2, V2 ,20.15)
+dif_visit2 = Bernie_data$CHI_MLU[Bernie_data$VISIT == 2] - TD_visit2
 
 # Visit 3
-Bernie_visit3=myfunction(3, 4.368557 ,28)
-dif_visit3 = 3.353191 - Bernie_visit3
+TD_visit3=myfunction(3, V3 ,20.15)
+dif_visit3 = Bernie_data$CHI_MLU[Bernie_data$VISIT == 3] - TD_visit3
 
 # Visit 4
-Bernie_visit4=myfunction(4, 4.516529 ,28)
-dif_visit4 = 3.183099 - Bernie_visit4
+TD_visit4=myfunction(4, V4 ,20.15)
+dif_visit4 = Bernie_data$CHI_MLU[Bernie_data$VISIT == 4] - TD_visit4
 
 # Visit 5
-Bernie_visit5=myfunction(5, 4.019565 ,28)
-dif_visit5 = 3.173252 - Bernie_visit5
+TD_visit5=myfunction(5, V5 ,20.15)
+dif_visit5 = Bernie_data$CHI_MLU[Bernie_data$VISIT == 5] - TD_visit5
 
 # Visit 6
-Bernie_visit6=myfunction(6, 3.818557 ,28)
-dif_visit6 = 3.448413 - Bernie_visit6
+TD_visit6=myfunction(6, V6 ,20.15)
+dif_visit6 = Bernie_data$CHI_MLU[Bernie_data$VISIT == 6] - TD_visit6
 
 # To create a dataframe 
 Visits = c(1,2,3,4,5,6)
 Category = c("TD", "TD","TD","TD","TD","TD", "Bernie","Bernie","Bernie","Bernie","Bernie","Bernie")
-MLU = c(Bernie_visit1, Bernie_visit2, Bernie_visit3, Bernie_visit4, Bernie_visit5, Bernie_visit6, Bernie_data$CHI_MLU)
+MLU = c(TD_visit1, TD_visit2, TD_visit3, TD_visit4, TD_visit5, TD_visit6, Bernie_data$CHI_MLU)
 
 
 Bernie_comp=data.frame(Visits, Category, MLU)
 
 # To create a plot
 ggplot(Bernie_comp, aes(x = Visits, y= MLU, colour = Category)) + geom_smooth() + geom_point()
-# From the plot it seems that Bernie performs better than the average TD (except Visit 2)
+# From the plot it seems that Bernie performs better than the average TD 
 
 
 # Using the predict function to compare VISIT 6
@@ -351,7 +350,7 @@ Bernie_6$CHI_MLU - Bernie_pred # To get the difference between predicted and acu
 
 [HERE GOES YOUR ANSWER]
 
-Comparing Bernie to typically developing children with the same Verbal IQ and Mother MLU we see that he is actually above average on all visists (except visit 2). Therefor it seem like there is no need to introduce an intervention.
+Comparing Bernie to typically developing children with the same Verbal IQ and Mother MLU we see that he is actually above average on all visists. Also Bernie performs better than the model predicts. Therefor it seem like there is no need to introduce an intervention.
 
 
 ### OPTIONAL: Exercise 4) Model Selection via Information Criteria
