@@ -50,7 +50,7 @@ powerInteraction
 [HERE GOES YOUR ANSWER]
 
 Visit = 100 % (98.17, 100)
-Diagnosis = 50 % (42.87, 57.13)
+Diagnosis = 48 % (37.90, 58.22)
 Interaction = 100 % (98.17, 100)
 
 The power analysis is only valid if the effect size is correct which depends on the power of the study. If the study was underpowered the effect sizes are questionable. 
