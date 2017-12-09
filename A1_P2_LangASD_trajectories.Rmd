@@ -234,8 +234,6 @@ Remember to report:
 
 An anova revealed that the quadratic mixed effect model is significantly better than the linear mixed effect model x^2(1) = 28.87, p < .05
 
-How to report growth curve?
-
 ## Let's test hypothesis 2: Parents speak equally to children with ASD and TD  (Exercise 3)
 
 ### Hypothesis: Parental MLU changes: i) over time, ii) according to diagnosis
@@ -274,4 +272,4 @@ r.squaredGLMM(m7)
 
 We created a mixed effects model using Visits, the MLU of the mother, Verbal IQ as fixed effect. The random effects added were by-subject random slopes for the variable visit.
 
-The model suggests that the number of visit (age/time) has a significantly positive influence on the Child's MLU, b = 0.19, SE = 0.02, t(68.2)=8.2, p<.05. Also the mean length of utterances produced by the mother has a significantly positive effect on the Child's MLU, b=0.34, SE = 0.05, t(286) = 6.9, p<.05 and the verbal IQ also has a significantly positive influence on the Child's MLU, b = 0.07, SE = 0.007, t(66,9) = 9.5, p<.05. Overall the model accounts for 56 % of the variance 
+The model suggests that the number of visit (age/time) has a significantly positive influence on the Child's MLU, b = 0.19, SE = 0.02, t(68.2)=8.2, p<.05. Also the mean length of utterances produced by the mother has a significantly positive effect on the Child's MLU, b=0.34, SE = 0.05, t(286) = 6.9, p<.05 and the verbal IQ also has a significantly positive influence on the Child's MLU, b = 0.07, SE = 0.007, t(66,9) = 9.5, p<.05. Overall the fixed effects accounts for 56 % of the variance 
